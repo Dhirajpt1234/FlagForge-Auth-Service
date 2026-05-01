@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  key         String
+  name        String
+  description String
+  environment String
+  enabled     Boolean  @default(false)
+  deleted     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  ruleDefinitions RuleDefinition[]
+
+  @@unique([key, environment])
+}
+
+model RuleDefinition {
+  id          String   @id @default(cuid())
+  flagId      String
+  environment String
+  ruleType    String
+  priority    Int
+  config      Json     // Store rule configuration as JSON
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  featureFlag FeatureFlag @relation(fields: [flagId], references: [id], onDelete: Cascade)
+
+  @@index([flagId, environment])
+  @@index([flagId, environment, priority])
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  refreshTokens RefreshToken[]
+  
+  // TODO: Add organization relationships later when org module is implemented
+  // memberships   UserMembership[]
+  
+  @@map("users")
+}
+
+// TODO: Add Organization model later when org module is implemented
+// model Organization {
+//   id          String   @id @default(cuid())
+//   name        String
+//   createdAt   DateTime @default(now()) @map("created_at")
+//   updatedAt   DateTime @updatedAt @map("updated_at")
+//   
+//   // Relations
+//   memberships UserMembership[]
+//   
+//   @@map("organizations")
+// }
+
+// TODO: Add UserMembership model later when org module is implemented
+// model UserMembership {
+//   id            String   @id @default(cuid())
+//   userId        String   @map("user_id")
+//   organizationId String  @map("organization_id")
+//   role          Role
+//   createdAt     DateTime @default(now()) @map("created_at")
+//   
+//   // Relations
+//   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+//   
+//   @@unique([userId, organizationId])
+//   @@map("user_memberships")
+// }
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  tokenHash  String   @map("token_hash")
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("refresh_tokens")
+}
+
+// TODO: Add Role enum later when RBAC is implemented
+// enum Role {
+//   ADMIN
+//   USER
+//   VIEWER
+// }
