@@ -32,7 +32,7 @@ const jsonLogger = pino(
   },
   pino.destination({
     dest: path.join(logDir, `${APP_NAME}.json.log`),
-    sync: false
+    sync: true
   })
 );
 

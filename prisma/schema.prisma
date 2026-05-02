@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,101 +7,191 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                      String               @id @default(cuid())
+  email                   String               @unique
+  name                    String?
+  passwordHash            String?
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  createdEnvironments     Environment[]        @relation("EnvironmentCreator")
+  createdFlags            FeatureFlag[]        @relation("FlagCreator")
+  ownedFlags              FeatureFlag[]        @relation("FlagOwner")
+  updatedFlags            FeatureFlag[]        @relation("FlagUpdater")
+  createdFlagEnvironments FlagEnvironment[]    @relation("FlagEnvironmentCreator")
+  updatedFlagEnvironments FlagEnvironment[]    @relation("FlagEnvironmentUpdater")
+  createdInvitations      Invitation[]         @relation("InvitedBy")
+  ownedOrganizations      Organization[]       @relation("OrgOwner")
+  memberships             OrganizationMember[]
+  refreshTokens           RefreshToken[]
+  createdRules            RuleDefinition[]     @relation("RuleCreator")
+}
+
+model Organization {
+  id           String               @id @default(cuid())
+  name         String
+  slug         String               @unique
+  ownerId      String
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  environments Environment[]
+  flags        FeatureFlag[]
+  invitations  Invitation[]
+  owner        User                 @relation("OrgOwner", fields: [ownerId], references: [id])
+  members      OrganizationMember[]
+
+  @@index([ownerId])
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  role           OrgRole
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@index([organizationId, role])
+}
+
+model Invitation {
+  id             String           @id @default(cuid())
+  organizationId String
+  email          String
+  role           OrgRole
+  token          String           @unique
+  status         InvitationStatus @default(PENDING)
+  invitedById    String
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  invitedBy      User             @relation("InvitedBy", fields: [invitedById], references: [id])
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, email])
+  @@index([status, expiresAt])
+}
+
+model Environment {
+  id             String            @id @default(cuid())
+  organizationId String
+  name           String
+  key            String
+  description    String?
+  isDefault      Boolean           @default(false)
+  createdById    String
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  createdBy      User              @relation("EnvironmentCreator", fields: [createdById], references: [id])
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  flagStates     FlagEnvironment[]
+
+  @@unique([organizationId, key])
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
 model FeatureFlag {
-  id          String   @id @default(cuid())
-  key         String
-  name        String
-  description String
-  environment String
-  enabled     Boolean  @default(false)
-  deleted     Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String            @id @default(cuid())
+  organizationId String
+  ownerId        String
+  key            String
+  name           String
+  description    String?
+  valueType      FlagValueType
+  archived       Boolean           @default(false)
+  createdById    String
+  updatedById    String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  createdBy      User              @relation("FlagCreator", fields: [createdById], references: [id])
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner          User              @relation("FlagOwner", fields: [ownerId], references: [id])
+  updatedBy      User?             @relation("FlagUpdater", fields: [updatedById], references: [id])
+  environments   FlagEnvironment[]
 
-  // Relations
-  ruleDefinitions RuleDefinition[]
-
-  @@unique([key, environment])
+  @@unique([organizationId, key])
+  @@index([organizationId, ownerId])
 }
 
 model RuleDefinition {
-  id          String   @id @default(cuid())
-  flagId      String
-  environment String
-  ruleType    String
-  priority    Int
-  config      Json     // Store rule configuration as JSON
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String          @id @default(cuid())
+  flagEnvironmentId String
+  ruleType          RuleType
+  priority          Int
+  config            Json
+  createdById       String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  createdBy         User            @relation("RuleCreator", fields: [createdById], references: [id])
+  flagEnvironment   FlagEnvironment @relation(fields: [flagEnvironmentId], references: [id], onDelete: Cascade)
 
-  // Relations
-  featureFlag FeatureFlag @relation(fields: [flagId], references: [id], onDelete: Cascade)
-
-  @@index([flagId, environment])
-  @@index([flagId, environment, priority])
+  @@unique([flagEnvironmentId, priority])
+  @@index([flagEnvironmentId, priority])
+  @@index([ruleType])
 }
-
-model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  passwordHash  String   @map("password_hash")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  
-  // Relations
-  refreshTokens RefreshToken[]
-  
-  // TODO: Add organization relationships later when org module is implemented
-  // memberships   UserMembership[]
-  
-  @@map("users")
-}
-
-// TODO: Add Organization model later when org module is implemented
-// model Organization {
-//   id          String   @id @default(cuid())
-//   name        String
-//   createdAt   DateTime @default(now()) @map("created_at")
-//   updatedAt   DateTime @updatedAt @map("updated_at")
-//   
-//   // Relations
-//   memberships UserMembership[]
-//   
-//   @@map("organizations")
-// }
-
-// TODO: Add UserMembership model later when org module is implemented
-// model UserMembership {
-//   id            String   @id @default(cuid())
-//   userId        String   @map("user_id")
-//   organizationId String  @map("organization_id")
-//   role          Role
-//   createdAt     DateTime @default(now()) @map("created_at")
-//   
-//   // Relations
-//   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-//   
-//   @@unique([userId, organizationId])
-//   @@map("user_memberships")
-// }
 
 model RefreshToken {
-  id         String   @id @default(cuid())
-  userId     String   @map("user_id")
-  tokenHash  String   @map("token_hash")
-  expiresAt  DateTime @map("expires_at")
-  createdAt  DateTime @default(now()) @map("created_at")
-  
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@map("refresh_tokens")
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
-// TODO: Add Role enum later when RBAC is implemented
-// enum Role {
-//   ADMIN
-//   USER
-//   VIEWER
-// }
+model FlagEnvironment {
+  id            String           @id @default(cuid())
+  flagId        String
+  environmentId String
+  enabled       Boolean          @default(false)
+  defaultValue  Json?
+  createdById   String
+  updatedById   String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  createdBy     User             @relation("FlagEnvironmentCreator", fields: [createdById], references: [id])
+  environment   Environment      @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  flag          FeatureFlag      @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  updatedBy     User?            @relation("FlagEnvironmentUpdater", fields: [updatedById], references: [id])
+  rules         RuleDefinition[]
+
+  @@unique([flagId, environmentId])
+  @@index([environmentId, enabled])
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  WRITER
+  READER
+}
+
+enum FlagValueType {
+  BOOLEAN
+  STRING
+  NUMBER
+  JSON
+}
+
+enum RuleType {
+  USER_ALLOW_LIST
+  ATTRIBUTE_MATCH
+  PERCENTAGE_ROLLOUT
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}

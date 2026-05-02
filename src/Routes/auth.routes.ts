@@ -5,6 +5,8 @@ import type IPasswordService from '../Service/IPasswordService';
 import type IUserService from '../Service/IUserService';
 import type { default as IUserRepository } from '../Repository/IUser.repository';
 import type { default as IRefreshTokenRepository } from '../Repository/IRefreshToken.repository';
+import type IOrganizationRepository from '../Repository/IOrganization.repository';
+import type IOrganizationMemberRepository from '../Repository/IOrganizationMember.repository';
 import AuthController from '../Controller/Auth.controller';
 import AuthService from '../Service/concrete/Auth.service';
 import TokenService from '../Service/concrete/Token.service';
@@ -12,6 +14,8 @@ import PasswordService from '../Service/concrete/Password.service';
 import UserService from '../Service/concrete/User.service';
 import UserRepository from '../Repository/concrete/User.repository';
 import RefreshTokenRepository from '../Repository/concrete/RefreshToken.repository';
+import OrganizationRepository from '../Repository/concrete/Organization.repository';
+import OrganizationMemberRepository from '../Repository/concrete/OrganizationMember.repository';
 import rateLimit from 'express-rate-limit';
 import createAuthMiddleware from '../Middleware/auth.middleware';
 
@@ -23,9 +27,11 @@ const createAuthRoutes = (databaseUrl: string): Router => {
   
   const userRepository: IUserRepository = new UserRepository(databaseUrl);
   const refreshTokenRepository: IRefreshTokenRepository = new RefreshTokenRepository(databaseUrl);
+  const organizationRepository: IOrganizationRepository = new OrganizationRepository();
+  const organizationMemberRepository: IOrganizationMemberRepository = new OrganizationMemberRepository();
   
   const userService: IUserService = new UserService(userRepository);
-  const authService: IAuthService = new AuthService(tokenService, passwordService, userService, refreshTokenRepository);
+  const authService: IAuthService = new AuthService(tokenService, passwordService, userService, refreshTokenRepository, organizationRepository, organizationMemberRepository);
   const authController = new AuthController(authService);
   const authMiddleware = createAuthMiddleware(tokenService);
 

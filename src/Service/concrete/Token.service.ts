@@ -6,13 +6,13 @@ import { ACCESS_TOKEN_EXPIRY, JWT_SECRET, REFRESH_TOKEN_EXPIRY_DAYS } from '../.
 
 export default class TokenService implements ITokenService {
   private readonly jwtSecret: Secret;
-  private readonly accessTokenExpiry: number;
+  private readonly accessTokenExpiry: string;
   private readonly refreshTokenExpiryDays: number;
   private readonly HS256algorithm: jwt.Algorithm;
 
   constructor() {
     this.jwtSecret = JWT_SECRET;
-    this.accessTokenExpiry = Number(ACCESS_TOKEN_EXPIRY);
+    this.accessTokenExpiry = ACCESS_TOKEN_EXPIRY;
     this.refreshTokenExpiryDays = Number(REFRESH_TOKEN_EXPIRY_DAYS);
     this.HS256algorithm = 'HS256';
   }
@@ -23,8 +23,10 @@ export default class TokenService implements ITokenService {
       iat: Math.floor(Date.now() / 1000),
     };
 
+    const expiresIn = parseInt(this.accessTokenExpiry);
+
     const options: jwt.SignOptions = {
-      expiresIn: this.accessTokenExpiry,
+      expiresIn,
       algorithm: this.HS256algorithm,
     };
 

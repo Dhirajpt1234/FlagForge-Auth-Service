@@ -1,5 +1,6 @@
 import type { default as IUserRepository } from '../IUser.repository';
-import type UserResponseDTO from '../../DTO/UserResponse.dto';
+import type { default as UserResponseDTO } from '../../DTO/UserResponse.dto';
+import type { default as UserWithPasswordDTO } from '../../DTO/UserWithPassword.dto';
 import DatabaseClient from '../../Database/db.client';
 import { ConflictError, NotFoundError, DatabaseError } from '../../Middleware/exceptionHandler.middleware';
 
@@ -97,7 +98,7 @@ export default class UserRepository implements IUserRepository {
     }
   }
 
-  async findWithPasswordByEmail(email: string): Promise<{ id: string; email: string; passwordHash: string } | null> {
+  async findWithPasswordByEmail(email: string): Promise<UserWithPasswordDTO | null> {
     try {
       const db = DatabaseClient.getPrismaInstance();
       const dbClient = db.getPrismaClient();
@@ -105,7 +106,7 @@ export default class UserRepository implements IUserRepository {
       const user = await dbClient.user.findUnique({
         where: { email },
         select: { id: true, email: true, passwordHash: true },
-      });
+      }) as UserWithPasswordDTO | null;
 
       return user;
     } catch (error) {

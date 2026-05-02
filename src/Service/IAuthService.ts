@@ -3,11 +3,20 @@ import type LoginRequestDTO from '../DTO/LoginRequest.dto';
 import type RefreshRequestDTO from '../DTO/RefreshRequest.dto';
 import type AuthResponseDTO from '../DTO/AuthResponse.dto';
 import type UserResponseDTO from '../DTO/UserResponse.dto';
+import type SignupCompleteResponseDTO from '../DTO/SignupCompleteResponse.dto';
+import type OrganizationResponseDTO from '../DTO/OrganizationResponse.dto';
+import type OrganizationCreationDataDTO from '../DTO/OrganizationCreationData.dto';
 
 export default interface IAuthService {
-  signup(dto: SignupRequestDTO): Promise<AuthResponseDTO>;
+  // Enhanced signup with organization creation
+  signup(dto: SignupRequestDTO): Promise<SignupCompleteResponseDTO>;
   login(dto: LoginRequestDTO): Promise<AuthResponseDTO>;
   refreshToken(dto: RefreshRequestDTO): Promise<AuthResponseDTO>;
   logout(refreshToken: string): Promise<void>;
   getUserById(userId: string): Promise<UserResponseDTO | null>;
+  
+  // Organization-related methods
+  createOrganizationWithOwner(data: OrganizationCreationDataDTO): Promise<OrganizationResponseDTO>;
+  validateOrganizationSlug(slug: string, organizationId?: string): Promise<boolean>;
+  generateOrganizationSlug(name: string): Promise<string>;
 }

@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import type IAuthService from '../Service/IAuthService';
 import type SignupRequestDTO from '../DTO/SignupRequest.dto';
+import type SignupCompleteResponseDTO from '../DTO/SignupCompleteResponse.dto';
 import type LoginRequestDTO from '../DTO/LoginRequest.dto';
 import type RefreshRequestDTO from '../DTO/RefreshRequest.dto';
 import { sendSuccessResponse } from '../Utils/ApiResponse.util';
@@ -15,9 +16,9 @@ export default class AuthController {
 
   signup = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const dto: SignupRequestDTO = req.body;
-    const result = await this.authService.signup(dto);
+    const result: SignupCompleteResponseDTO = await this.authService.signup(dto);
     
-    res.status(201).json(sendSuccessResponse('User created successfully', 201, result));
+    res.status(201).json(sendSuccessResponse('User and organization created successfully', 201, result));
   });
 
   login = asyncHandler(async (req: Request, res: Response): Promise<void> => {
