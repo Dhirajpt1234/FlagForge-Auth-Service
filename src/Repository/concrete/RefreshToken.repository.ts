@@ -1,20 +1,18 @@
 import type { default as IRefreshTokenRepository } from '../IRefreshToken.repository';
 import DatabaseClient from '../../Database/db.client';
 import { DatabaseError } from '../../Middleware/exceptionHandler.middleware';
+import { PrismaClient } from '@prisma/client';
 
 export default class RefreshTokenRepository implements IRefreshTokenRepository {
-  private dbClient: DatabaseClient;
+  private dbClient: PrismaClient;
 
   constructor(databaseUrl: string) {
-    this.dbClient = DatabaseClient.getInstance();
+    this.dbClient = DatabaseClient.getPrismaInstance().getPrismaClient();
   }
 
   async create(userId: string, tokenHash: string, expiresAt: Date): Promise<void> {
     try {
-      const db = DatabaseClient.getPrismaInstance();
-      const dbClient = db.getPrismaClient();
-
-      await dbClient.refreshToken.create({
+      await this.dbClient.refreshToken.create({
         data: {
           userId,
           tokenHash,
@@ -29,10 +27,7 @@ export default class RefreshTokenRepository implements IRefreshTokenRepository {
 
   async findByTokenHash(tokenHash: string): Promise<{ id: string; userId: string; tokenHash: string; expiresAt: Date } | null> {
     try {
-      const db = DatabaseClient.getPrismaInstance();
-      const dbClient = db.getPrismaClient();
-
-      const token = await dbClient.refreshToken.findFirst({
+      const token = await this.dbClient.refreshToken.findFirst({
         where: { tokenHash },
       });
 
@@ -54,10 +49,7 @@ export default class RefreshTokenRepository implements IRefreshTokenRepository {
 
   async findValidTokens(): Promise<{ id: string; userId: string; tokenHash: string; expiresAt: Date }[]> {
     try {
-      const db = DatabaseClient.getPrismaInstance();
-      const dbClient = db.getPrismaClient();
-
-      const tokens = await dbClient.refreshToken.findMany({
+      const tokens = await this.dbClient.refreshToken.findMany({
         where: {
           expiresAt: {
             gt: new Date(),
@@ -79,10 +71,7 @@ export default class RefreshTokenRepository implements IRefreshTokenRepository {
 
   async deleteById(id: string): Promise<void> {
     try {
-      const db = DatabaseClient.getPrismaInstance();
-      const dbClient = db.getPrismaClient();
-
-      await dbClient.refreshToken.delete({
+      await this.dbClient.refreshToken.delete({
         where: { id },
       });
     } catch (error) {
@@ -93,10 +82,7 @@ export default class RefreshTokenRepository implements IRefreshTokenRepository {
 
   async deleteByUserId(userId: string): Promise<void> {
     try {
-      const db = DatabaseClient.getPrismaInstance();
-      const dbClient = db.getPrismaClient();
-
-      await dbClient.refreshToken.deleteMany({
+      await this.dbClient.refreshToken.deleteMany({
         where: { userId },
       });
     } catch (error) {

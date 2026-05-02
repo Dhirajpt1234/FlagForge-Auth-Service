@@ -2,21 +2,19 @@ import type { default as IUserRepository } from '../IUser.repository';
 import type { default as UserResponseDTO } from '../../DTO/UserResponse.dto';
 import type { default as UserWithPasswordDTO } from '../../DTO/UserWithPassword.dto';
 import DatabaseClient from '../../Database/db.client';
-import { ConflictError, NotFoundError, DatabaseError } from '../../Middleware/exceptionHandler.middleware';
+import { ConflictError, DatabaseError } from '../../Middleware/exceptionHandler.middleware';
+import { PrismaClient } from '@prisma/client';
 
 export default class UserRepository implements IUserRepository {
-  private dbClient: DatabaseClient;
+  private dbClient: PrismaClient;
 
   constructor(databaseUrl: string) {
-    this.dbClient = DatabaseClient.getInstance();
+    this.dbClient = DatabaseClient.getPrismaInstance().getPrismaClient();
   }
 
   async create(email: string, passwordHash: string): Promise<UserResponseDTO> {
     try {
-      const db = DatabaseClient.getPrismaInstance();
-      const dbClient = db.getPrismaClient();
-
-      const existingUser = await dbClient.user.findUnique({
+      const existingUser = await this.dbClient.user.findUnique({
         where: { email },
       });
 
@@ -24,7 +22,7 @@ export default class UserRepository implements IUserRepository {
         throw new ConflictError('User with this email already exists');
       }
 
-      const user = await dbClient.user.create({
+      const user = await this.dbClient.user.create({
         data: {
           email,
           passwordHash,
@@ -43,10 +41,7 @@ export default class UserRepository implements IUserRepository {
 
   async findByEmail(email: string): Promise<UserResponseDTO | null> {
     try {
-      const db = DatabaseClient.getPrismaInstance();
-      const dbClient = db.getPrismaClient();
-
-      const user = await dbClient.user.findUnique({
+      const user = await this.dbClient.user.findUnique({
         where: { email },
       });
 
@@ -63,10 +58,7 @@ export default class UserRepository implements IUserRepository {
 
   async findById(id: string): Promise<UserResponseDTO | null> {
     try {
-      const db = DatabaseClient.getPrismaInstance();
-      const dbClient = db.getPrismaClient();
-
-      const user = await dbClient.user.findUnique({
+      const user = await this.dbClient.user.findUnique({
         where: { id },
       });
 
@@ -83,10 +75,7 @@ export default class UserRepository implements IUserRepository {
 
   async emailExists(email: string): Promise<boolean> {
     try {
-      const db = DatabaseClient.getPrismaInstance();
-      const dbClient = db.getPrismaClient();
-
-      const user = await dbClient.user.findUnique({
+      const user = await this.dbClient.user.findUnique({
         where: { email },
         select: { id: true },
       });
@@ -100,10 +89,7 @@ export default class UserRepository implements IUserRepository {
 
   async findWithPasswordByEmail(email: string): Promise<UserWithPasswordDTO | null> {
     try {
-      const db = DatabaseClient.getPrismaInstance();
-      const dbClient = db.getPrismaClient();
-
-      const user = await dbClient.user.findUnique({
+      const user = await this.dbClient.user.findUnique({
         where: { email },
         select: { id: true, email: true, passwordHash: true },
       }) as UserWithPasswordDTO | null;
