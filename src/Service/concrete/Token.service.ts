@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import type ITokenService from '../ITokenService';
 import { ACCESS_TOKEN_EXPIRY, JWT_SECRET, REFRESH_TOKEN_EXPIRY_DAYS } from '../../config/properties';
+import { OrgRole } from '../../Types/OrgRole.enum';
 
 export default class TokenService implements ITokenService {
   private readonly jwtSecret: Secret;
@@ -23,7 +24,25 @@ export default class TokenService implements ITokenService {
       iat: Math.floor(Date.now() / 1000),
     };
 
-    const expiresIn = parseInt(this.accessTokenExpiry);
+    const expiresIn = this.convertExpiryToSeconds(this.accessTokenExpiry);
+
+    const options: jwt.SignOptions = {
+      expiresIn,
+      algorithm: this.HS256algorithm,
+    };
+
+    return jwt.sign(payload, this.jwtSecret, options);
+  }
+
+  async generateAccessTokenWithOrg(userId: string, orgId: string, role: OrgRole): Promise<string> {
+    const payload = {
+      userId,
+      orgId,
+      role,
+      iat: Math.floor(Date.now() / 1000),
+    };
+
+    const expiresIn = this.convertExpiryToSeconds(this.accessTokenExpiry);
 
     const options: jwt.SignOptions = {
       expiresIn,
@@ -52,6 +71,25 @@ export default class TokenService implements ITokenService {
     }
   }
 
+  async verifyAccessTokenWithOrg(token: string): Promise<{ userId: string; orgId: string; role: OrgRole }> {
+    try {
+      const decoded = jwt.verify(token, this.jwtSecret, { algorithms: [this.HS256algorithm] }) as any;
+      return { 
+        userId: decoded.userId, 
+        orgId: decoded.orgId, 
+        role: decoded.role as OrgRole 
+      };
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new Error('Token expired');
+      } else if (error instanceof jwt.JsonWebTokenError) {
+        throw new Error('Invalid token');
+      } else {
+        throw new Error('Token verification failed');
+      }
+    }
+  }
+
   async hashToken(token: string): Promise<string> {
     return await bcrypt.hash(token, 10);
   }
@@ -64,5 +102,25 @@ export default class TokenService implements ITokenService {
 
   getRefreshTokenExpiry(): Date {
     return this.generateTokenExpiry(this.refreshTokenExpiryDays);
+  }
+
+  private convertExpiryToSeconds(expiry: string): number {
+    // Parse time strings like '24h', '7d', '30m', '180m' to seconds
+    const match = expiry.match(/^(\d+)([smhd])$/);
+    if (!match) {
+      // If no unit specified, assume seconds
+      return parseInt(expiry, 10);
+    }
+
+    const value = parseInt(match[1], 10);
+    const unit = match[2];
+
+    switch (unit) {
+      case 's': return value;           // seconds
+      case 'm': return value * 60;     // minutes to seconds
+      case 'h': return value * 3600;   // hours to seconds
+      case 'd': return value * 86400;  // days to seconds
+      default: return parseInt(expiry, 10);
+    }
   }
 }

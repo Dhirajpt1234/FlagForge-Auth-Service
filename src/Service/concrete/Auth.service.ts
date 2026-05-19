@@ -100,8 +100,12 @@ export default class AuthService implements IAuthService {
       role: OrgRole.OWNER,
     });
 
-    // Generate tokens
-    const accessToken = await this.tokenService.generateAccessToken(user.id);
+    // Generate tokens with organization context
+    const accessToken = await this.tokenService.generateAccessTokenWithOrg(
+      user.id,
+      createdOrganization.id,
+      OrgRole.OWNER
+    );
     const refreshToken = await this.tokenService.generateRefreshToken();
     const refreshTokenHash = await this.tokenService.hashToken(refreshToken);
     const expiresAt = this.tokenService.getRefreshTokenExpiry();
@@ -148,7 +152,22 @@ export default class AuthService implements IAuthService {
       throw new ValidationError('Invalid email or password');
     }
 
-    const accessToken = await this.tokenService.generateAccessToken(user.id);
+    // Find user's organization membership
+    const memberships = await this.organizationMemberRepository.findByUserId(user.id);
+    
+    if (!memberships || memberships.length === 0) {
+      throw new UnauthorizedError('User is not a member of any organization');
+    }
+
+    // Use the first organization membership for login
+    // TODO: In the future, let users choose which organization to log into
+    const membership = memberships[0];
+    
+    const accessToken = await this.tokenService.generateAccessTokenWithOrg(
+      user.id,
+      membership.organizationId,
+      membership.role as OrgRole
+    );
     const refreshToken = await this.tokenService.generateRefreshToken();
     const refreshTokenHash = await this.tokenService.hashToken(refreshToken);
     const expiresAt = this.tokenService.getRefreshTokenExpiry();
@@ -190,7 +209,22 @@ export default class AuthService implements IAuthService {
 
     await this.refreshTokenRepository.deleteById(validToken.id);
 
-    const accessToken = await this.tokenService.generateAccessToken(user.id);
+    // Find user's organization membership
+    const memberships = await this.organizationMemberRepository.findByUserId(user.id);
+    
+    if (!memberships || memberships.length === 0) {
+      throw new UnauthorizedError('User is not a member of any organization');
+    }
+
+    // Use the first organization membership for token refresh
+    // TODO: In the future, preserve the original organization context. so implement switch company feature.
+    const membership = memberships[0];
+    
+    const accessToken = await this.tokenService.generateAccessTokenWithOrg(
+      user.id,
+      membership.organizationId,
+      membership.role as OrgRole
+    );
     const newRefreshToken = await this.tokenService.generateRefreshToken();
     const refreshTokenHash = await this.tokenService.hashToken(newRefreshToken);
     const expiresAt = this.tokenService.getRefreshTokenExpiry();

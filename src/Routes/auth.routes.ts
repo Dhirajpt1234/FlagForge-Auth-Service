@@ -5,8 +5,8 @@ import type IPasswordService from '../Service/IPasswordService';
 import type IUserService from '../Service/IUserService';
 import type { default as IUserRepository } from '../Repository/IUser.repository';
 import type { default as IRefreshTokenRepository } from '../Repository/IRefreshToken.repository';
-import type IOrganizationRepository from '../Repository/IOrganization.repository';
-import type IOrganizationMemberRepository from '../Repository/IOrganizationMember.repository';
+import IOrganizationRepository from '../Repository/IOrganization.repository';
+import IOrganizationMemberRepository from '../Repository/IOrganizationMember.repository';
 import AuthController from '../Controller/Auth.controller';
 import AuthService from '../Service/concrete/Auth.service';
 import TokenService from '../Service/concrete/Token.service';
@@ -18,6 +18,7 @@ import OrganizationRepository from '../Repository/concrete/Organization.reposito
 import OrganizationMemberRepository from '../Repository/concrete/OrganizationMember.repository';
 import rateLimit from 'express-rate-limit';
 import createAuthMiddleware from '../Middleware/auth.middleware';
+import { createInvitationRoutes } from './invitation.routes';
 
 const createAuthRoutes = (databaseUrl: string): Router => {
   const router = Router();
@@ -49,6 +50,10 @@ const createAuthRoutes = (databaseUrl: string): Router => {
   router.post('/v1/refresh', authController.refreshToken);
   router.post('/v1/logout', authController.logout);
   router.get('/v1/profile', authMiddleware, authController.getProfile);
+
+  // Add invitation routes
+  const invitationRoutes = createInvitationRoutes(databaseUrl);
+  router.use('/v1', invitationRoutes);
 
   return router;
 };

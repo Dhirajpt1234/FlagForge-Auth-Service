@@ -101,6 +101,23 @@ export default class UserRepository implements IUserRepository {
     }
   }
 
+  async update(id: string, data: { name?: string }): Promise<UserResponseDTO> {
+    try {
+      const user = await this.dbClient.user.update({
+        where: { id },
+        data: {
+          ...(data.name && { name: data.name }),
+          updatedAt: new Date(),
+        },
+      });
+
+      return this.mapPrismaToUserResponse(user);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw new DatabaseError('Failed to update user');
+    }
+  }
+
   private mapPrismaToUserResponse(user: any): UserResponseDTO {
     return {
       id: user.id,

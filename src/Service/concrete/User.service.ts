@@ -32,4 +32,8 @@ export default class UserService implements IUserService {
     }
     throw new Error('Method not implemented');
   }
+
+  async updateUser(id: string, data: { name?: string }): Promise<UserResponseDTO> {
+    return await this.userRepository.update(id, data);
+  }
 }

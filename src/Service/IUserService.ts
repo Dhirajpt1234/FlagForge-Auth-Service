@@ -6,4 +6,5 @@ export default interface IUserService {
   getUserById(id: string): Promise<UserResponseDTO | null>;
   emailExists(email: string): Promise<boolean>;
   getUserWithPasswordByEmail(email: string): Promise<{ id: string; email: string; passwordHash: string } | null>;
+  updateUser(id: string, data: { name?: string }): Promise<UserResponseDTO>;
 }
