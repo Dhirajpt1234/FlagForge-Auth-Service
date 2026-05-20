@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import DatabaseClient from './Database/db.client';
 import { createAuthRoutes } from './Routes/auth.routes';
+import { createOrganizationRoutes } from './Routes/organization.routes';
 import { exceptionHandler } from './Middleware/exceptionHandler.middleware';
 import logger from './Utils/logger.util';
 import { PORT, OK_STATUS } from './config/properties';
@@ -30,6 +31,10 @@ app.get('/health', (req, res) => {
 // Auth routes with versioning
 const authRoutes = createAuthRoutes(process.env.DATABASE_URL || '');
 app.use('/api/auth', authRoutes);
+
+// Organization routes with versioning
+const organizationRoutes = createOrganizationRoutes();
+app.use('/api/organizations', organizationRoutes);
 
 // Global error handler (must be after all routes)
 app.use(exceptionHandler);

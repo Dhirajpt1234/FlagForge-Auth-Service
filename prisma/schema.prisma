@@ -12,6 +12,7 @@ model User {
   email                   String               @unique
   name                    String?
   passwordHash            String?
+  isDeleted               Boolean              @default(false)
   createdAt               DateTime             @default(now())
   updatedAt               DateTime             @updatedAt
   createdEnvironments     Environment[]        @relation("EnvironmentCreator")
@@ -25,6 +26,8 @@ model User {
   memberships             OrganizationMember[]
   refreshTokens           RefreshToken[]
   createdRules            RuleDefinition[]     @relation("RuleCreator")
+
+  @@index([isDeleted])
 }
 
 model Organization {
@@ -32,6 +35,7 @@ model Organization {
   name         String
   slug         String               @unique
   ownerId      String
+  isDeleted    Boolean              @default(false)
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
   environments Environment[]
@@ -41,6 +45,7 @@ model Organization {
   members      OrganizationMember[]
 
   @@index([ownerId])
+  @@index([isDeleted])
 }
 
 model OrganizationMember {
@@ -48,6 +53,7 @@ model OrganizationMember {
   organizationId String
   userId         String
   role           OrgRole
+  isDeleted      Boolean      @default(false)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -56,6 +62,7 @@ model OrganizationMember {
   @@unique([organizationId, userId])
   @@index([userId])
   @@index([organizationId, role])
+  @@index([isDeleted])
 }
 
 model Invitation {
@@ -84,6 +91,7 @@ model Environment {
   key            String
   description    String?
   isDefault      Boolean           @default(false)
+  isDeleted      Boolean           @default(false)
   createdById    String
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
@@ -94,6 +102,7 @@ model Environment {
   @@unique([organizationId, key])
   @@unique([organizationId, name])
   @@index([organizationId])
+  @@index([isDeleted])
 }
 
 model FeatureFlag {

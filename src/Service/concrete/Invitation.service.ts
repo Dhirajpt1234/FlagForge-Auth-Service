@@ -187,7 +187,7 @@ export default class InvitationService implements IInvitationService {
     await this.organizationMemberRepository.create({
       organizationId: invitation.organizationId,
       userId: user.id,
-      role: invitation.role,
+      role: invitation.role as OrgRole,
     });
 
     // Update invitation status
@@ -244,9 +244,18 @@ export default class InvitationService implements IInvitationService {
 
   async listInvitations(orgId: string, status?: string): Promise<InvitationListResponseDTO> {
     const invitations = await this.invitationRepository.findByOrganization(orgId, status);
+
+    // console.log('Invitations:', invitations);
+    console.log(
+      'Org ID:', orgId,
+      'Status:', status
+    )
     
     // Get organization details
     const organization = await this.organizationRepository.findById(orgId);
+
+    console.log('Organization:', organization);
+
     if (!organization) {
       throw new NotFoundError('Organization not found');
     }
