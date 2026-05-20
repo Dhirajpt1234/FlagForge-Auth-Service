@@ -111,8 +111,6 @@ export default class OrganizationRepository implements IOrganizationRepository {
         },
       });
 
-      console.log('Organization found:', organization);
-
       if (!organization) return null;
 
       return {
