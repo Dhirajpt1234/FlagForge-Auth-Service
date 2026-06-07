@@ -69,6 +69,20 @@ export const validateInvitationRoleMiddleware = () => {
   };
 };
 
+export const createOwnerOnlyMiddleware = () => {
+  return (req: OrgContextRequest, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      return next(new UnauthorizedError('User not authenticated'));
+    }
+
+    if (req.user.role !== OrgRole.OWNER) {
+      return next(new UnauthorizedError('Only organization owners can perform this action'));
+    }
+
+    next();
+  };
+};
+
 function hasMinimumRole(userRole: OrgRole, minimumRole: OrgRole): boolean {
   const roleLevels = {
     [OrgRole.OWNER]: 4,
