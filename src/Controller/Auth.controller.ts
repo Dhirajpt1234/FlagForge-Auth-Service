@@ -4,6 +4,8 @@ import type SignupRequestDTO from '../DTO/SignupRequest.dto';
 import type SignupCompleteResponseDTO from '../DTO/SignupCompleteResponse.dto';
 import type LoginRequestDTO from '../DTO/LoginRequest.dto';
 import type RefreshRequestDTO from '../DTO/RefreshRequest.dto';
+import type ForgotPasswordRequestDTO from '../DTO/ForgotPasswordRequest.dto';
+import type ResetPasswordRequestDTO from '../DTO/ResetPasswordRequest.dto';
 import { sendSuccessResponse } from '../Utils/ApiResponse.util';
 import { asyncHandler } from '../Middleware/exceptionHandler.middleware';
 
@@ -58,5 +60,19 @@ export default class AuthController {
     }
 
     res.json(sendSuccessResponse('Profile retrieved successfully', 200, user));
+  });
+
+  forgotPassword = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const dto: ForgotPasswordRequestDTO = req.body;
+    const result = await this.authService.forgotPassword(dto.email);
+    
+    res.json(sendSuccessResponse('Password reset request processed', 200, result));
+  });
+
+  resetPassword = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const dto: ResetPasswordRequestDTO = req.body;
+    await this.authService.resetPassword(dto.token, dto.newPassword);
+    
+    res.json(sendSuccessResponse('Password reset successfully', 200));
   });
 }

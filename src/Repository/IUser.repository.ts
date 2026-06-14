@@ -7,4 +7,5 @@ export default interface IUserRepository {
   emailExists(email: string): Promise<boolean>;
   findWithPasswordByEmail(email: string): Promise<{ id: string; email: string; passwordHash: string } | null>;
   update(id: string, data: { name?: string }): Promise<UserResponseDTO>;
+  updatePassword(id: string, passwordHash: string): Promise<void>;
 }

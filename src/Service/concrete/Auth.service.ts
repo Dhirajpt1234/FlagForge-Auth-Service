@@ -4,6 +4,7 @@ import type IPasswordService from '../IPasswordService';
 import type IUserService from '../IUserService';
 import { ValidationError, NotFoundError, UnauthorizedError } from '../../Middleware/exceptionHandler.middleware';
 import IRefreshTokenRepository from '../../Repository/IRefreshToken.repository';
+import IPasswordResetTokenRepository from '../../Repository/IPasswordResetToken.repository';
 import IOrganizationRepository from '../../Repository/IOrganization.repository';
 import IOrganizationMemberRepository from '../../Repository/IOrganizationMember.repository';
 import SignupRequestDTO from '../../DTO/SignupRequest.dto';
@@ -14,14 +15,17 @@ import RefreshRequestDTO from '../../DTO/RefreshRequest.dto';
 import UserResponseDTO from '../../DTO/UserResponse.dto';
 import OrganizationResponseDTO from '../../DTO/OrganizationResponse.dto';
 import OrganizationCreationDataDTO from '../../DTO/OrganizationCreationData.dto';
+import ForgotPasswordResponseDTO from '../../DTO/ForgotPasswordResponse.dto';
 import logger from '../../Utils/logger.util';
 import { OrgRole } from '../../Types/OrgRole.enum';
+import { v4 as uuidv4 } from 'uuid';
 
 export default class AuthService implements IAuthService {
   private tokenService: ITokenService;
   private passwordService: IPasswordService;
   private userService: IUserService;
   private refreshTokenRepository: IRefreshTokenRepository;
+  private passwordResetTokenRepository: IPasswordResetTokenRepository;
   private organizationRepository: IOrganizationRepository;
   private organizationMemberRepository: IOrganizationMemberRepository;
 
@@ -30,6 +34,7 @@ export default class AuthService implements IAuthService {
     passwordService: IPasswordService,
     userService: IUserService,
     refreshTokenRepository: IRefreshTokenRepository,
+    passwordResetTokenRepository: IPasswordResetTokenRepository,
     organizationRepository: IOrganizationRepository,
     organizationMemberRepository: IOrganizationMemberRepository
   ) {
@@ -37,6 +42,7 @@ export default class AuthService implements IAuthService {
     this.passwordService = passwordService;
     this.userService = userService;
     this.refreshTokenRepository = refreshTokenRepository;
+    this.passwordResetTokenRepository = passwordResetTokenRepository;
     this.organizationRepository = organizationRepository;
     this.organizationMemberRepository = organizationMemberRepository;
   }
@@ -289,5 +295,88 @@ export default class AuthService implements IAuthService {
     }
 
     return finalSlug;
+  }
+
+  async forgotPassword(email: string): Promise<ForgotPasswordResponseDTO> {
+    if (!email) {
+      throw new ValidationError('Email is required');
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new ValidationError('Invalid email format');
+    }
+
+    const user = await this.userService.getUserByEmail(email);
+    if (!user) {
+      // Return success even if user doesn't exist to prevent email enumeration
+      return {
+        message: 'If an account with this email exists, a password reset link has been sent.',
+      };
+    }
+
+    // Delete any existing reset tokens for this user
+    await this.passwordResetTokenRepository.deleteByUserId(user.id);
+
+    // Generate new reset token
+    const token = uuidv4();
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+    await this.passwordResetTokenRepository.create(user.id, token, expiresAt);
+
+    // TODO: Send email with reset link
+    // For now, return the token in the response for development/testing
+    logger.info(`Password reset token generated for user ${user.id}: ${token}`);
+
+    return {
+      message: 'If an account with this email exists, a password reset link has been sent.',
+      expiresAt,
+    };
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    if (!token || !newPassword) {
+      throw new ValidationError('Token and new password are required');
+    }
+
+    if (newPassword.length < 4) {
+      throw new ValidationError('Password must be at least 4 characters long');
+    }
+
+    // Find the reset token
+    const resetToken = await this.passwordResetTokenRepository.findByToken(token);
+    if (!resetToken) {
+      throw new ValidationError('Invalid or expired reset token');
+    }
+
+    // Check if token is expired
+    if (resetToken.expiresAt < new Date()) {
+      throw new ValidationError('Reset token has expired');
+    }
+
+    // Check if token has already been used
+    if (resetToken.used) {
+      throw new ValidationError('Reset token has already been used');
+    }
+
+    // Get the user
+    const user = await this.userService.getUserById(resetToken.userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    // Hash the new password
+    const passwordHash = await this.passwordService.hash(newPassword);
+
+    // Update user's password
+    await this.userService.updatePassword(resetToken.userId, passwordHash);
+
+    // Mark the token as used
+    await this.passwordResetTokenRepository.markAsUsed(resetToken.id);
+
+    // Invalidate all refresh tokens for this user
+    await this.refreshTokenRepository.deleteByUserId(resetToken.userId);
+
+    logger.info(`Password reset successfully for user ${user.id}`);
   }
 }

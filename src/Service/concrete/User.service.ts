@@ -36,4 +36,8 @@ export default class UserService implements IUserService {
   async updateUser(id: string, data: { name?: string }): Promise<UserResponseDTO> {
     return await this.userRepository.update(id, data);
   }
+
+  async updatePassword(id: string, passwordHash: string): Promise<void> {
+    await this.userRepository.updatePassword(id, passwordHash);
+  }
 }

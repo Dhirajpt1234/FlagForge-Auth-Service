@@ -6,6 +6,7 @@ import type UserResponseDTO from '../DTO/UserResponse.dto';
 import type SignupCompleteResponseDTO from '../DTO/SignupCompleteResponse.dto';
 import type OrganizationResponseDTO from '../DTO/OrganizationResponse.dto';
 import type OrganizationCreationDataDTO from '../DTO/OrganizationCreationData.dto';
+import type ForgotPasswordResponseDTO from '../DTO/ForgotPasswordResponse.dto';
 
 export default interface IAuthService {
   // Enhanced signup with organization creation
@@ -14,6 +15,10 @@ export default interface IAuthService {
   refreshToken(dto: RefreshRequestDTO): Promise<AuthResponseDTO>;
   logout(refreshToken: string): Promise<void>;
   getUserById(userId: string): Promise<UserResponseDTO | null>;
+  
+  // Password reset methods
+  forgotPassword(email: string): Promise<ForgotPasswordResponseDTO>;
+  resetPassword(token: string, newPassword: string): Promise<void>;
   
   // Organization-related methods
   createOrganizationWithOwner(data: OrganizationCreationDataDTO): Promise<OrganizationResponseDTO>;

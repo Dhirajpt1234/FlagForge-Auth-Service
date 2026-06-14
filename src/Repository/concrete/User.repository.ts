@@ -118,6 +118,21 @@ export default class UserRepository implements IUserRepository {
     }
   }
 
+  async updatePassword(id: string, passwordHash: string): Promise<void> {
+    try {
+      await this.dbClient.user.update({
+        where: { id },
+        data: {
+          passwordHash,
+          updatedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      console.error('Error updating user password:', error);
+      throw new DatabaseError('Failed to update user password');
+    }
+  }
+
   private mapPrismaToUserResponse(user: any): UserResponseDTO {
     return {
       id: user.id,
