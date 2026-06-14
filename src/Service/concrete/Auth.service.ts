@@ -48,7 +48,7 @@ export default class AuthService implements IAuthService {
   }
 
   async signup(dto: SignupRequestDTO): Promise<SignupCompleteResponseDTO> {
-    const { email, password, name, organization } = dto;
+    const { email, password, firstName, lastName, organization } = dto;
 
     // Validation
     if (!email || !password) {
@@ -89,7 +89,7 @@ export default class AuthService implements IAuthService {
 
     // Create user, organization, and membership in a transaction-like flow
     const passwordHash = await this.passwordService.hash(password);
-    const user = await this.userService.createUser(email, passwordHash);
+    const user = await this.userService.createUser(email, passwordHash, firstName, lastName);
 
     const orgData: OrganizationCreationDataDTO = {
       name: organization.name,
@@ -122,6 +122,14 @@ export default class AuthService implements IAuthService {
       user: {
         id: user.id,
         email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatarUrl: user.avatarUrl,
+        phoneNumber: user.phoneNumber,
+        timezone: user.timezone,
+        locale: user.locale,
+        isActive: user.isActive,
+        lastLoginAt: user.lastLoginAt,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },
@@ -157,6 +165,9 @@ export default class AuthService implements IAuthService {
       logger. error('Invalid password');
       throw new ValidationError('Invalid email or password');
     }
+
+    // Update last login time
+    await this.userService.updateLastLoginAt(user.id);
 
     // Find user's organization membership
     const memberships = await this.organizationMemberRepository.findByUserId(user.id);

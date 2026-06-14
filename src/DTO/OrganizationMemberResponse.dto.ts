@@ -7,7 +7,8 @@ export default interface OrganizationMemberResponseDTO {
   updatedAt: string;
   user: {
     id: string;
-    name: string | null;
+    firstName: string | null;
+    lastName: string | null;
     email: string;
   };
 }

@@ -1,7 +1,8 @@
 export default interface SignupRequestDTO {
   email: string;
   password: string;
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   organization: {
     name: string;
     slug?: string;

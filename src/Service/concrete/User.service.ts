@@ -9,8 +9,8 @@ export default class UserService implements IUserService {
     this.userRepository = userRepository;
   }
 
-  async createUser(email: string, passwordHash: string): Promise<UserResponseDTO> {
-    return await this.userRepository.create(email, passwordHash);
+  async createUser(email: string, passwordHash: string, firstName?: string, lastName?: string): Promise<UserResponseDTO> {
+    return await this.userRepository.create(email, passwordHash, firstName, lastName);
   }
 
   async getUserByEmail(email: string): Promise<UserResponseDTO | null> {
@@ -33,11 +33,15 @@ export default class UserService implements IUserService {
     throw new Error('Method not implemented');
   }
 
-  async updateUser(id: string, data: { name?: string }): Promise<UserResponseDTO> {
+  async updateUser(id: string, data: { firstName?: string; lastName?: string; avatarUrl?: string; phoneNumber?: string; timezone?: string; locale?: string; isActive?: boolean }): Promise<UserResponseDTO> {
     return await this.userRepository.update(id, data);
   }
 
   async updatePassword(id: string, passwordHash: string): Promise<void> {
     await this.userRepository.updatePassword(id, passwordHash);
+  }
+
+  async updateLastLoginAt(id: string): Promise<void> {
+    await this.userRepository.updateLastLoginAt(id);
   }
 }

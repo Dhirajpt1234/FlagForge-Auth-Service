@@ -12,7 +12,7 @@ export default class UserRepository implements IUserRepository {
     this.dbClient = DatabaseClient.getPrismaInstance().getPrismaClient();
   }
 
-  async create(email: string, passwordHash: string): Promise<UserResponseDTO> {
+  async create(email: string, passwordHash: string, firstName?: string, lastName?: string): Promise<UserResponseDTO> {
     try {
       const existingUser = await this.dbClient.user.findUnique({
         where: { email },
@@ -26,6 +26,8 @@ export default class UserRepository implements IUserRepository {
         data: {
           email,
           passwordHash,
+          firstName,
+          lastName,
         },
       });
 
@@ -101,12 +103,18 @@ export default class UserRepository implements IUserRepository {
     }
   }
 
-  async update(id: string, data: { name?: string }): Promise<UserResponseDTO> {
+  async update(id: string, data: { firstName?: string; lastName?: string; avatarUrl?: string; phoneNumber?: string; timezone?: string; locale?: string; isActive?: boolean }): Promise<UserResponseDTO> {
     try {
       const user = await this.dbClient.user.update({
         where: { id },
         data: {
-          ...(data.name && { name: data.name }),
+          ...(data.firstName !== undefined && { firstName: data.firstName }),
+          ...(data.lastName !== undefined && { lastName: data.lastName }),
+          ...(data.avatarUrl !== undefined && { avatarUrl: data.avatarUrl }),
+          ...(data.phoneNumber !== undefined && { phoneNumber: data.phoneNumber }),
+          ...(data.timezone !== undefined && { timezone: data.timezone }),
+          ...(data.locale !== undefined && { locale: data.locale }),
+          ...(data.isActive !== undefined && { isActive: data.isActive }),
           updatedAt: new Date(),
         },
       });
@@ -133,10 +141,33 @@ export default class UserRepository implements IUserRepository {
     }
   }
 
+  async updateLastLoginAt(id: string): Promise<void> {
+    try {
+      await this.dbClient.user.update({
+        where: { id },
+        data: {
+          lastLoginAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      console.error('Error updating last login time:', error);
+      throw new DatabaseError('Failed to update last login time');
+    }
+  }
+
   private mapPrismaToUserResponse(user: any): UserResponseDTO {
     return {
       id: user.id,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatarUrl: user.avatarUrl,
+      phoneNumber: user.phoneNumber,
+      timezone: user.timezone,
+      locale: user.locale,
+      isActive: user.isActive,
+      lastLoginAt: user.lastLoginAt,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

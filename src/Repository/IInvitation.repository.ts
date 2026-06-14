@@ -36,7 +36,8 @@ export default interface IInvitationRepository {
     invitedBy: {
       id: string;
       email: string;
-      name: string | null;
+      firstName: string | null;
+      lastName: string | null;
     };
   } | null>;
 
@@ -58,7 +59,8 @@ export default interface IInvitationRepository {
     invitedBy: {
       id: string;
       email: string;
-      name: string | null;
+      firstName: string | null;
+      lastName: string | null;
     };
   } | null>;
   
@@ -92,7 +94,8 @@ export default interface IInvitationRepository {
     invitedBy: {
       id: string;
       email: string;
-      name: string | null;
+      firstName: string | null;
+      lastName: string | null;
     };
   }[]>;
   

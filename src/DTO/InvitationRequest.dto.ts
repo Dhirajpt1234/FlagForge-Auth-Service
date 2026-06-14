@@ -21,7 +21,8 @@ export interface InvitationResponseDTO {
   invitedBy: {
     id: string;
     email: string;
-    name?: string;
+    firstName: string | null;
+    lastName: string | null;
   };
   organization: {
     id: string;

@@ -96,10 +96,11 @@ export default class InvitationService implements IInvitationService {
 
     // Send invitation email
     try {
+      const inviterName = `${inviter.firstName || ''} ${inviter.lastName || ''}`.trim() || inviter.email;
       await this.emailService.sendInvitationEmail({
         to: email,
         organizationName: organization.name,
-        inviterName: inviter.name || inviter.email,
+        inviterName,
         role,
         acceptUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invite/${token}`,
         expiryDays: 15,
@@ -123,7 +124,8 @@ export default class InvitationService implements IInvitationService {
       invitedBy: {
         id: invitation.invitedById,
         email: inviter.email,
-        name: inviter.name || undefined,
+        firstName: inviter.firstName || null,
+        lastName: inviter.lastName || null,
       },
       organization: {
         id: invitation.organizationId,
@@ -179,8 +181,12 @@ export default class InvitationService implements IInvitationService {
     }
 
     // Update user name if not set
-    if (!user.name && name) {
-      await this.userService.updateUser(user.id, { name });
+    if ((!user.firstName || !user.lastName) && name) {
+      const nameParts = name.split(' ');
+      await this.userService.updateUser(user.id, {
+        firstName: nameParts[0] || user.firstName,
+        lastName: nameParts.slice(1).join(' ') || user.lastName,
+      });
     }
 
     // Add user to organization
@@ -264,7 +270,8 @@ export default class InvitationService implements IInvitationService {
         invitedBy: {
           id: invitation.invitedById,
           email: invitation.invitedBy.email,
-          name: invitation.invitedBy.name || undefined,
+          firstName: invitation.invitedBy.firstName,
+          lastName: invitation.invitedBy.lastName,
         },
         organization: {
           id: invitation.organizationId,
@@ -329,7 +336,7 @@ export default class InvitationService implements IInvitationService {
         await this.emailService.sendInvitationEmail({
           to: invitation.email,
           organizationName: organization.name,
-          inviterName: inviter.name || inviter.email,
+          inviterName: `${inviter.firstName || ""} ${inviter.lastName || ""}`.trim() || inviter.email,
           role: invitation.role,
           acceptUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invite/${newToken}`,
           expiryDays: 15,
@@ -345,7 +352,7 @@ export default class InvitationService implements IInvitationService {
         await this.emailService.sendInvitationEmail({
           to: invitation.email,
           organizationName: organization.name,
-          inviterName: inviter.name || inviter.email,
+          inviterName: `${inviter.firstName || ""} ${inviter.lastName || ""}`.trim() || inviter.email,
           role: invitation.role,
           acceptUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invite/${invitation.token}`,
           expiryDays: 15,
@@ -380,7 +387,8 @@ export default class InvitationService implements IInvitationService {
       invitedBy: {
         id: invitation.invitedById,
         email: invitation.invitedBy.email,
-        name: invitation.invitedBy.name || undefined,
+        firstName: invitation.invitedBy.firstName || null,
+        lastName: invitation.invitedBy.lastName || null,
       },
       organization: {
         id: invitation.organizationId,
@@ -407,7 +415,8 @@ export default class InvitationService implements IInvitationService {
       invitedBy: {
         id: invitation.invitedById,
         email: invitation.invitedBy.email,
-        name: invitation.invitedBy.name || undefined,
+        firstName: invitation.invitedBy.firstName || null,
+        lastName: invitation.invitedBy.lastName || null,
       },
       organization: {
         id: invitation.organizationId,

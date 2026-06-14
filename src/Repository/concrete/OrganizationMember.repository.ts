@@ -103,7 +103,8 @@ export default class OrganizationMemberRepository implements IOrganizationMember
           user: {
             select: {
               id: true,
-              name: true,
+              firstName: true,
+              lastName: true,
               email: true,
             },
           },
@@ -119,7 +120,8 @@ export default class OrganizationMemberRepository implements IOrganizationMember
         updatedAt: member.updatedAt.toISOString(),
         user: {
           id: member.user.id,
-          name: member.user.name,
+          firstName: member.user.firstName,
+          lastName: member.user.lastName,
           email: member.user.email,
         },
       }));
@@ -147,7 +149,8 @@ export default class OrganizationMemberRepository implements IOrganizationMember
           user: {
             select: {
               id: true,
-              name: true,
+              firstName: true,
+              lastName: true,
               email: true,
             },
           },
@@ -165,7 +168,8 @@ export default class OrganizationMemberRepository implements IOrganizationMember
         updatedAt: member.updatedAt.toISOString(),
         user: {
           id: member.user.id,
-          name: member.user.name,
+          firstName: member.user.firstName,
+          lastName: member.user.lastName,
           email: member.user.email,
         },
       };

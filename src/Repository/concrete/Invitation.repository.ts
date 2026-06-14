@@ -77,7 +77,8 @@ export default class InvitationRepository implements IInvitationRepository {
     invitedBy: {
       id: string;
       email: string;
-      name: string | null;
+      firstName: string | null;
+      lastName: string | null;
     };
   } | null> {
     try {
@@ -104,22 +105,14 @@ export default class InvitationRepository implements IInvitationRepository {
             select: {
               id: true,
               email: true,
-              name: true,
+              firstName: true,
+              lastName: true,
             },
           },
         },
       });
       
-      // Transform the result to match the interface exactly
-      if (!invitation) return null;
-      
-      return {
-        ...invitation,
-        invitedBy: {
-          ...invitation.invitedBy,
-          name: invitation.invitedBy.name || null,
-        },
-      };
+      return invitation;
     } catch (error) {
       console.error('Error finding invitation by invitation ID:', error);
       throw new DatabaseError('Failed to find invitation');
@@ -144,7 +137,8 @@ export default class InvitationRepository implements IInvitationRepository {
     invitedBy: {
       id: string;
       email: string;
-      name: string | null;
+      firstName: string | null;
+      lastName: string | null;
     };
   } | null> {
     try {
@@ -171,22 +165,14 @@ export default class InvitationRepository implements IInvitationRepository {
             select: {
               id: true,
               email: true,
-              name: true,
+              firstName: true,
+              lastName: true,
             },
           },
         },
       });
       
-      // Transform the result to match the interface exactly
-      if (!invitation) return null;
-      
-      return {
-        ...invitation,
-        invitedBy: {
-          ...invitation.invitedBy,
-          name: invitation.invitedBy.name || null,
-        },
-      };
+      return invitation;
     } catch (error) {
       console.error('Error finding invitation by token:', error);
       throw new DatabaseError('Failed to find invitation');
@@ -250,7 +236,8 @@ export default class InvitationRepository implements IInvitationRepository {
     invitedBy: {
       id: string;
       email: string;
-      name: string | null;
+      firstName: string | null;
+      lastName: string | null;
     };
   }[]> {
     try {
@@ -281,7 +268,8 @@ export default class InvitationRepository implements IInvitationRepository {
             select: {
               id: true,
               email: true,
-              name: true,
+              firstName: true,
+              lastName: true,
             },
           },
         },
@@ -290,14 +278,7 @@ export default class InvitationRepository implements IInvitationRepository {
         },
       });
       
-      // Transform the results to match the interface exactly
-      return invitations.map(invitation => ({
-        ...invitation,
-        invitedBy: {
-          ...invitation.invitedBy,
-          name: invitation.invitedBy.name || null,
-        },
-      }));
+      return invitations;
     } catch (error) {
       console.error('Error finding invitations by organization:', error);
       throw new DatabaseError('Failed to find invitations');

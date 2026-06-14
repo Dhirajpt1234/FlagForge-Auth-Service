@@ -10,7 +10,14 @@ datasource db {
 model User {
   id                      String               @id @default(cuid())
   email                   String               @unique
-  name                    String?
+  firstName               String?
+  lastName                String?
+  avatarUrl               String?
+  phoneNumber             String?
+  timezone                String?
+  locale                  String               @default("en")
+  isActive                Boolean              @default(true)
+  lastLoginAt             DateTime?
   passwordHash            String?
   isDeleted               Boolean              @default(false)
   createdAt               DateTime             @default(now())
@@ -29,6 +36,7 @@ model User {
   createdRules            RuleDefinition[]     @relation("RuleCreator")
 
   @@index([isDeleted])
+  @@index([isActive])
 }
 
 model Organization {
