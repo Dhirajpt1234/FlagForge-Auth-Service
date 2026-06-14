@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import DatabaseClient from './Database/db.client';
 import { createAuthRoutes } from './Routes/auth.routes';
@@ -14,9 +15,10 @@ import packageJson from '../package.json';
 dotenv.config();
 
 const app = express();
-const serverPort = PORT || 3001;
+const serverPort = PORT || 3002;
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 
 // Health check endpoint
