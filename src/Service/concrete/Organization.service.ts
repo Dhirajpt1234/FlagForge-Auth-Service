@@ -22,13 +22,12 @@ export default class OrganizationService implements IOrganizationService {
     this.organizationMemberRepository = organizationMemberRepository;
   }
 
-  // Don't use this api. use singup api to create organization
   async createOrganization(data: OrganizationCreationDataDTO, userId: string): Promise<OrganizationResponseDTO> {
-    const { name, slug, ownerId } = data;
+    const { name, slug } = data;
 
     // Validation
-    if (!name || !slug || !ownerId) {
-      throw new ValidationError('Name, slug, and ownerId are required');
+    if (!name || !slug) {
+      throw new ValidationError('Name and slug are required');
     }
 
     // Check if slug exists
@@ -41,17 +40,17 @@ export default class OrganizationService implements IOrganizationService {
     const organization = await this.organizationRepository.create({
       name,
       slug,
-      ownerId,
+      ownerId: userId,
     });
 
     // Add owner as member
     await this.organizationMemberRepository.create({
       organizationId: organization.id,
-      userId: ownerId,
+      userId,
       role: OrgRole.OWNER,
     });
 
-    logger.info('Organization created', { orgId: organization.id, ownerId });
+    logger.info('Organization created', { orgId: organization.id, ownerId: userId });
 
     return organization;
   }

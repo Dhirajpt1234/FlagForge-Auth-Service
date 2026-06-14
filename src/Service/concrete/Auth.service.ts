@@ -94,10 +94,9 @@ export default class AuthService implements IAuthService {
     const orgData: OrganizationCreationDataDTO = {
       name: organization.name,
       slug: slug,
-      ownerId: user.id,
     };
 
-    const createdOrganization = await this.createOrganizationWithOwner(orgData);
+    const createdOrganization = await this.createOrganizationWithOwner(orgData, user.id);
 
     // Create organization member with OWNER role
     await this.organizationMemberRepository.create({
@@ -274,8 +273,12 @@ export default class AuthService implements IAuthService {
     return await this.userService.getUserById(userId);
   }
 
-  async createOrganizationWithOwner(data: OrganizationCreationDataDTO): Promise<OrganizationResponseDTO> {
-    return await this.organizationRepository.create(data);
+  async createOrganizationWithOwner(data: OrganizationCreationDataDTO, ownerId: string): Promise<OrganizationResponseDTO> {
+    return await this.organizationRepository.create({
+      name: data.name,
+      slug: data.slug,
+      ownerId,
+    });
   }
 
   async validateOrganizationSlug(slug: string, organizationId?: string): Promise<boolean> {

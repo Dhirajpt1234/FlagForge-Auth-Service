@@ -15,7 +15,6 @@ export default class OrganizationController {
     this.organizationService = organizationService;
   }
 
-  // NOTE: This endpoint should not be used - organizations are created during user signup
   createOrganization = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const dto: OrganizationCreationDataDTO = req.body;
     const userId = (req as any).user?.userId;
@@ -24,9 +23,6 @@ export default class OrganizationController {
       res.status(401).json(sendSuccessResponse('User not authenticated', 401));
       return;
     }
-
-    // This endpoint is for admin use only - organizations should be created during signup
-    logger.warn("Organization creation endpoint called (should use signup instead)", { userId, dto });
 
     const result = await this.organizationService.createOrganization(dto, userId);
     

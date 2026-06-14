@@ -21,7 +21,7 @@ export default interface IAuthService {
   resetPassword(token: string, newPassword: string): Promise<void>;
   
   // Organization-related methods
-  createOrganizationWithOwner(data: OrganizationCreationDataDTO): Promise<OrganizationResponseDTO>;
+  createOrganizationWithOwner(data: OrganizationCreationDataDTO, ownerId: string): Promise<OrganizationResponseDTO>;
   validateOrganizationSlug(slug: string, organizationId?: string): Promise<boolean>;
   generateOrganizationSlug(name: string): Promise<string>;
 }

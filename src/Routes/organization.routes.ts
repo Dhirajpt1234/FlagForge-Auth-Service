@@ -27,7 +27,7 @@ const createOrganizationRoutes = (): Router => {
   // Middleware for admin/owner permissions
   const adminOrOwnerMiddleware = createRolePermissionMiddleware(OrgRole.ADMIN);
   
-  // NOTE: This endpoint should not be used - organizations are created during user signup
+  // create new organization and become ownerif you are existing user already.
   router.post('/v1/organizations', authMiddleware, organizationController.createOrganization);
 
   // Get all organizations for the authenticated user is part of.
